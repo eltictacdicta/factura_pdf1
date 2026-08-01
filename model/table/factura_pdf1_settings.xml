@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tabla>
+    <columna>
+        <nombre>id</nombre>
+        <tipo>serial</tipo>
+        <nulo>NO</nulo>
+    </columna>
+    <columna>
+        <nombre>name</nombre>
+        <tipo>character varying(50)</tipo>
+        <nulo>NO</nulo>
+    </columna>
+    <columna>
+        <nombre>settings_json</nombre>
+        <tipo>text</tipo>
+        <nulo>NO</nulo>
+    </columna>
+    <columna>
+        <nombre>current_version</nombre>
+        <tipo>integer</tipo>
+        <defecto>0</defecto>
+        <nulo>NO</nulo>
+    </columna>
+    <columna>
+        <nombre>created_at</nombre>
+        <tipo>timestamp</tipo>
+        <nulo>YES</nulo>
+    </columna>
+    <columna>
+        <nombre>updated_at</nombre>
+        <tipo>timestamp</tipo>
+        <nulo>YES</nulo>
+    </columna>
+    <restriccion>
+        <nombre>factura_pdf1_settings_pkey</nombre>
+        <consulta>PRIMARY KEY (id)</consulta>
+    </restriccion>
+    <restriccion>
+        <nombre>factura_pdf1_settings_name_key</nombre>
+        <consulta>UNIQUE (name)</consulta>
+    </restriccion>
+</tabla>

@@ -1,0 +1,7 @@
+/composer.phar
+/nbproject/
+/tests/_output/
+.idea/
+.vscode/
+*.swp
+*~

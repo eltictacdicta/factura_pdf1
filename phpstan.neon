@@ -1,0 +1,31 @@
+parameters:
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    bootstrapFiles:
+        - ../../phpstan-bootstrap.php
+    paths:
+        - Controller
+        - Lib
+        - Services
+        - Model
+        - Init.php
+    excludePaths:
+        - vendor
+    tmpDir: ../../.phpstan-cache/factura_pdf1
+    ignoreErrors:
+        # The new Contacto + ReciboCliente models live in this plugin
+        # (PR-2 Hallazgos 1 and 2). They are now resolvable as fully
+        # qualified classes; the loader's calls go through them
+        # unconditionally. No ignoreErrors needed for those joins.
+        # Defensive property_exists($row, 'iban') is kept after
+        # instanceof narrowing so the call site does not break if a
+        # downstream plugin overrides the upstream model layout.
+        -
+            message: "#Call to function property_exists\\(\\) with cuenta_banco and 'iban' will always evaluate to true\\.#"
+            path: Services/RelatedModelsLoader.php
+        # tryRequireClass wraps the is_file() probe in a foreach and
+        # PHPStan statically proves the file does not exist in the test
+        # environment; the runtime branch is still needed for production.
+        -
+            message: '#If condition is always false\.#'
+            path: Services/RelatedModelsLoader.php

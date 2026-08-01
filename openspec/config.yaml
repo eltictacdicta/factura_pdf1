@@ -1,0 +1,55 @@
+ownership: plugin-local
+project: factura_pdf1-plugin
+scope: plugins/factura_pdf1/
+parent_project: fs-framework
+parent_openspec: ../../../openspec/   # reference only; do NOT create changes there
+artifact_store: hybrid   # engram + openspec files
+
+# OpenSpec per plugin — the ONLY place SDD lives for this plugin.
+# (Mirrors the project rule in AGENTS.md → "OpenSpec per Plugin".)
+#
+#   - Plugin openspec (this file): source of truth for ALL plugin SDD
+#     (proposal, specs, tasks, verify-report, archive-report).
+#   - Core openspec (../../../openspec/): ONLY for changes that touch core
+#     (base/, src/, controller/, model/ root, or cross-plugin conventions).
+#   - DO NOT create entries in the core openspec/ for changes that are
+#     100% internal to this plugin.
+#   - Quick rule: if the change does NOT modify files outside
+#     plugins/factura_pdf1/, the SDD lives here.
+
+change_root: plugins/factura_pdf1/openspec/changes/{name}/
+archive_root: plugins/factura_pdf1/openspec/changes/archive/{YYYY-MM-DD}-{name}/
+specs_root: plugins/factura_pdf1/openspec/specs/
+
+description: |
+  In-house detailed invoice plugin for FSFramework, ported from
+  FacturaPDF1 (FacturaScripts 2025, LGPL-3.0). Replaces
+  plugins/factura_detallada as the canonical detailed invoice format.
+  Parent-tracked (no internal .git sub-repo), like clientes_facturacion.
+  Locked decisions (see Engram #352 + this change's proposal):
+  - 4 client document types (no supplier variants)
+  - 30 settings stored in dedicated factura_pdf1_settings table
+  - Visual fidelity to upstream Cezpdf: LOW (mpdf + Twig is allowed
+    to differ visually; the same license was granted in
+    factura-detallada-modernizacion)
+  - Verifactu remains a label; QR block is a no-op placeholder until
+    a separate QrForVerifactuService change lands
+  - Public URL contract ?page=factura_detallada&id=N is preserved
+    (tpvmod prints through it at plugins/tpvmod/controller/tpvmod.php:206)
+
+strict_tdd: true
+
+testing:
+  runner: ddev exec php vendor/bin/phpunit
+  plugin_tests: true
+  plugin_phpunit: plugins/factura_pdf1/phpunit.xml
+  linter: ddev exec composer phpstan
+  smoke: >
+    With tpvmod, clientes_facturacion, catalogo_core, business_data,
+    clientes_core, and factura_pdf1 active, open a saved factura in
+    tpvmod, click print — the browser must receive a valid PDF
+    (Content-Type: application/pdf, non-empty body, %PDF- magic bytes).
+    Separately, open the admin settings page
+    (?page=admin_factura_pdf1) and change one setting; the change
+    must persist across reloads and round-trip through the
+    factura_pdf1_settings table.

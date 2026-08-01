@@ -1,0 +1,238 @@
+{#
+/**
+ * Admin settings for factura_pdf1 PDF layout (upstream FacturaPDF1 parity).
+ */
+#}
+{{ include('header.html.twig') }}
+
+<div class="container-fluid" style="margin-top: 10px;">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2>{{ trans('factura-pdf1.admin.title') }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" style="margin-top: 20px;">
+    {% if fsc.validation_error %}
+        <div class="alert alert-danger">{{ fsc.validation_error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ fsc.url() }}" id="form-factura-pdf1-settings">
+        {{ csrf_field() }}
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.logo') }}</legend>
+            <div class="row">
+                <div class="col-sm-3">
+                    <label for="posicionlogo">{{ trans('factura-pdf1.setting.posicionlogo') }}</label>
+                    <select class="form-control" id="posicionlogo" name="posicionlogo">
+                        <option value="9" {% if fsc.settings.posicionlogo == 9 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="0" {% if fsc.settings.posicionlogo == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.auto') }}</option>
+                        <option value="1" {% if fsc.settings.posicionlogo == 1 %}selected{% endif %}>{{ trans('factura-pdf1.option.left') }}</option>
+                        <option value="2" {% if fsc.settings.posicionlogo == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.up') }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-3">
+                    <label for="margenlogo">{{ trans('factura-pdf1.setting.margenlogo') }}</label>
+                    <input type="number" class="form-control" id="margenlogo" name="margenlogo" min="0" max="200" value="{{ fsc.settings.margenlogo }}">
+                </div>
+                <div class="col-sm-3">
+                    <label for="medidalogo">{{ trans('factura-pdf1.setting.medidalogo') }}</label>
+                    <input type="number" class="form-control" id="medidalogo" name="medidalogo" min="10" max="100" value="{{ fsc.settings.medidalogo }}">
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.print-options') }}</legend>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label for="disposicion_cabecera">{{ trans('factura-pdf1.setting.disposicion-cabecera') }}</label>
+                    <select class="form-control" id="disposicion_cabecera" name="disposicion_cabecera">
+                        <option value="1" {% if fsc.settings.disposicion_cabecera == 1 %}selected{% endif %}>{{ trans('factura-pdf1.disposicion.logo-empresa-cliente') }}</option>
+                        <option value="2" {% if fsc.settings.disposicion_cabecera == 2 %}selected{% endif %}>{{ trans('factura-pdf1.disposicion.logo-cliente-empresa') }}</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.layout') }}</legend>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label for="espaciomaximoempresa">{{ trans('factura-pdf1.setting.espaciomaximoempresa') }}</label>
+                    <input type="number" class="form-control" id="espaciomaximoempresa" name="espaciomaximoempresa" min="150" max="400" value="{{ fsc.settings.espaciomaximoempresa }}">
+                </div>
+                <div class="col-sm-4">
+                    <label for="mostraralmacen">{{ trans('factura-pdf1.setting.mostraralmacen') }}</label>
+                    <select class="form-control" id="mostraralmacen" name="mostraralmacen">
+                        <option value=" " {% if fsc.settings.mostraralmacen == ' ' %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="warehouse" {% if fsc.settings.mostraralmacen == 'warehouse' %}selected{% endif %}>{{ trans('factura-pdf1.option.warehouse') }}</option>
+                        <option value="branch1" {% if fsc.settings.mostraralmacen == 'branch1' %}selected{% endif %}>{{ trans('factura-pdf1.option.branch1') }}</option>
+                        <option value="branch2" {% if fsc.settings.mostraralmacen == 'branch2' %}selected{% endif %}>{{ trans('factura-pdf1.option.branch2') }}</option>
+                        <option value="#" {% if fsc.settings.mostraralmacen == '#' %}selected{% endif %}>{{ trans('factura-pdf1.option.custom') }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-4">
+                    <label for="tituloalmacen">{{ trans('factura-pdf1.setting.tituloalmacen') }}</label>
+                    <input type="text" class="form-control" id="tituloalmacen" name="tituloalmacen" maxlength="50" value="{{ fsc.settings.tituloalmacen }}">
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-sm-3">
+                    <label for="ref2">{{ trans('factura-pdf1.setting.ref2') }}</label>
+                    <select class="form-control" id="ref2" name="ref2">
+                        <option value="0" {% if fsc.settings.ref2 == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="1" {% if fsc.settings.ref2 == 1 %}selected{% endif %}>{{ trans('factura-pdf1.option.below-customer') }}</option>
+                        <option value="2" {% if fsc.settings.ref2 == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.below-invoice-number') }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-5">
+                    <label for="documentosrelacionados">{{ trans('factura-pdf1.setting.documentosrelacionados') }}</label>
+                    <select class="form-control" id="documentosrelacionados" name="documentosrelacionados">
+                        <option value="0" {% if fsc.settings.documentosrelacionados == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="1" {% if fsc.settings.documentosrelacionados == 1 %}selected{% endif %}>{{ trans('factura-pdf1.option.show-if-not-appear') }}</option>
+                        <option value="2" {% if fsc.settings.documentosrelacionados == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.show-always') }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="checkbox" style="margin-top: 10px;">
+                <label><input type="checkbox" name="ocultarprovincia" value="1" {% if fsc.settings.ocultarprovincia %}checked{% endif %}> {{ trans('factura-pdf1.setting.ocultarprovincia') }}</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="ocultarpais" value="1" {% if fsc.settings.ocultarpais %}checked{% endif %}> {{ trans('factura-pdf1.setting.ocultarpais') }}</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="mostraralmacentel" value="1" {% if fsc.settings.mostraralmacentel %}checked{% endif %}> {{ trans('factura-pdf1.setting.mostraralmacentel') }}</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="ocultardireccionenvio" value="1" {% if fsc.settings.ocultardireccionenvio %}checked{% endif %}> {{ trans('factura-pdf1.setting.ocultardireccionenvio') }}</label>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.lines') }}</legend>
+            <div class="row">
+                <div class="col-sm-3">
+                    <label for="colorcabecera">{{ trans('factura-pdf1.setting.colorcabecera') }}</label>
+                    <input type="color" class="form-control" id="colorcabecera" name="colorcabecera" value="{{ fsc.settings.colorcabecera }}">
+                </div>
+                <div class="col-sm-3">
+                    <label for="colorfilas">{{ trans('factura-pdf1.setting.colorfilas') }}</label>
+                    <input type="color" class="form-control" id="colorfilas" name="colorfilas" value="{{ fsc.settings.colorfilas }}">
+                </div>
+                <div class="col-sm-3">
+                    <label for="espaciofilas">{{ trans('factura-pdf1.setting.espaciofilas') }}</label>
+                    <input type="number" class="form-control" id="espaciofilas" name="espaciofilas" min="0" max="20" value="{{ fsc.settings.espaciofilas }}">
+                </div>
+            </div>
+            <div class="checkbox" style="margin-top: 10px;">
+                <label><input type="checkbox" name="ocultarreferenciaprod" value="1" {% if fsc.settings.ocultarreferenciaprod %}checked{% endif %}> {{ trans('factura-pdf1.setting.ocultarreferenciaprod') }}</label>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.totals') }}</legend>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label for="pagoyvencimiento">{{ trans('factura-pdf1.setting.pagoyvencimiento') }}</label>
+                    <select class="form-control" id="pagoyvencimiento" name="pagoyvencimiento">
+                        <option value="0" {% if fsc.settings.pagoyvencimiento == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="1" {% if fsc.settings.pagoyvencimiento == 1 %}selected{% endif %}>{{ trans('factura-pdf1.option.original-mode') }}</option>
+                        <option value="2" {% if fsc.settings.pagoyvencimiento == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.white-mode') }}</option>
+                        <option value="3" {% if fsc.settings.pagoyvencimiento == 3 %}selected{% endif %}>{{ trans('factura-pdf1.option.one-line-mode') }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="checkbox" style="margin-top: 10px;">
+                <label><input type="checkbox" name="ocultartablaimpuestos" value="1" {% if fsc.settings.ocultartablaimpuestos %}checked{% endif %}> {{ trans('factura-pdf1.setting.ocultartablaimpuestos') }}</label>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="traducirformaspago" value="1" {% if fsc.settings.traducirformaspago %}checked{% endif %}> {{ trans('factura-pdf1.setting.traducirformaspago') }}</label>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+            <legend>{{ trans('factura-pdf1.group.footer') }}</legend>
+            <h4>{{ trans('factura-pdf1.section.text1') }}</h4>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label for="posiciontexto1">{{ trans('factura-pdf1.setting.posiciontexto1') }}</label>
+                    <select class="form-control" id="posiciontexto1" name="posiciontexto1">
+                        <option value="0" {% if fsc.settings.posiciontexto1 == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="2" {% if fsc.settings.posiciontexto1 == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.before-invoice-data') }}</option>
+                        <option value="3" {% if fsc.settings.posiciontexto1 == 3 %}selected{% endif %}>{{ trans('factura-pdf1.option.after-invoice-data') }}</option>
+                        <option value="4" {% if fsc.settings.posiciontexto1 == 4 %}selected{% endif %}>{{ trans('factura-pdf1.option.after-detail-lines') }}</option>
+                        <option value="5" {% if fsc.settings.posiciontexto1 == 5 %}selected{% endif %}>{{ trans('factura-pdf1.option.before-tax') }}</option>
+                        <option value="7" {% if fsc.settings.posiciontexto1 == 7 %}selected{% endif %}>{{ trans('factura-pdf1.option.at-footer') }}</option>
+                        <option value="9" {% if fsc.settings.posiciontexto1 == 9 %}selected{% endif %}>{{ trans('factura-pdf1.option.in-new-page') }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-2">
+                    <label for="medidatexto1">{{ trans('factura-pdf1.setting.medidatexto1') }}</label>
+                    <input type="number" class="form-control" id="medidatexto1" name="medidatexto1" min="6" max="20" value="{{ fsc.settings.medidatexto1 }}">
+                </div>
+                <div class="col-sm-2">
+                    <label for="colortexto1">{{ trans('factura-pdf1.setting.colortexto1') }}</label>
+                    <input type="color" class="form-control" id="colortexto1" name="colortexto1" value="{{ fsc.settings.colortexto1 }}">
+                </div>
+                <div class="col-sm-2">
+                    <label for="justiftexto1">{{ trans('factura-pdf1.setting.justiftexto1') }}</label>
+                    <select class="form-control" id="justiftexto1" name="justiftexto1">
+                        <option value="left" {% if fsc.settings.justiftexto1 == 'left' %}selected{% endif %}>{{ trans('factura-pdf1.option.left') }}</option>
+                        <option value="center" {% if fsc.settings.justiftexto1 == 'center' %}selected{% endif %}>{{ trans('factura-pdf1.option.center') }}</option>
+                        <option value="right" {% if fsc.settings.justiftexto1 == 'right' %}selected{% endif %}>{{ trans('factura-pdf1.option.right') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <h4 style="margin-top: 20px;">{{ trans('factura-pdf1.section.text2') }}</h4>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label for="posiciontexto2">{{ trans('factura-pdf1.setting.posiciontexto2') }}</label>
+                    <select class="form-control" id="posiciontexto2" name="posiciontexto2">
+                        <option value="0" {% if fsc.settings.posiciontexto2 == 0 %}selected{% endif %}>{{ trans('factura-pdf1.option.dont-show') }}</option>
+                        <option value="2" {% if fsc.settings.posiciontexto2 == 2 %}selected{% endif %}>{{ trans('factura-pdf1.option.before-invoice-data') }}</option>
+                        <option value="3" {% if fsc.settings.posiciontexto2 == 3 %}selected{% endif %}>{{ trans('factura-pdf1.option.after-invoice-data') }}</option>
+                        <option value="4" {% if fsc.settings.posiciontexto2 == 4 %}selected{% endif %}>{{ trans('factura-pdf1.option.after-detail-lines') }}</option>
+                        <option value="5" {% if fsc.settings.posiciontexto2 == 5 %}selected{% endif %}>{{ trans('factura-pdf1.option.before-tax') }}</option>
+                        <option value="6" {% if fsc.settings.posiciontexto2 == 6 %}selected{% endif %}>{{ trans('factura-pdf1.option.footer-before-text-1') }}</option>
+                        <option value="7" {% if fsc.settings.posiciontexto2 == 7 %}selected{% endif %}>{{ trans('factura-pdf1.option.footer-after-text-1') }}</option>
+                        <option value="8" {% if fsc.settings.posiciontexto2 == 8 %}selected{% endif %}>{{ trans('factura-pdf1.option.new-page-before-text-1') }}</option>
+                        <option value="9" {% if fsc.settings.posiciontexto2 == 9 %}selected{% endif %}>{{ trans('factura-pdf1.option.new-page-after-text-1') }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-2">
+                    <label for="medidatexto2">{{ trans('factura-pdf1.setting.medidatexto2') }}</label>
+                    <input type="number" class="form-control" id="medidatexto2" name="medidatexto2" min="6" max="20" value="{{ fsc.settings.medidatexto2 }}">
+                </div>
+                <div class="col-sm-2">
+                    <label for="colortexto2">{{ trans('factura-pdf1.setting.colortexto2') }}</label>
+                    <input type="color" class="form-control" id="colortexto2" name="colortexto2" value="{{ fsc.settings.colortexto2 }}">
+                </div>
+                <div class="col-sm-2">
+                    <label for="justiftexto2">{{ trans('factura-pdf1.setting.justiftexto2') }}</label>
+                    <select class="form-control" id="justiftexto2" name="justiftexto2">
+                        <option value="left" {% if fsc.settings.justiftexto2 == 'left' %}selected{% endif %}>{{ trans('factura-pdf1.option.left') }}</option>
+                        <option value="center" {% if fsc.settings.justiftexto2 == 'center' %}selected{% endif %}>{{ trans('factura-pdf1.option.center') }}</option>
+                        <option value="right" {% if fsc.settings.justiftexto2 == 'right' %}selected{% endif %}>{{ trans('factura-pdf1.option.right') }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-sm-12">
+                    <label for="texto2">{{ trans('factura-pdf1.setting.texto2') }}</label>
+                    <textarea class="form-control" id="texto2" name="texto2" rows="3" maxlength="1000">{{ fsc.settings.texto2 }}</textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">{{ trans('factura-pdf1.admin.save') }}</button>
+            <button type="submit" class="btn btn-default" name="reset_defaults" value="1">{{ trans('factura-pdf1.admin.reset') }}</button>
+        </div>
+    </form>
+</div>
+
+{{ include('footer.html.twig') }}
