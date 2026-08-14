@@ -25,6 +25,9 @@ if (\class_exists(__NAMESPACE__ . '\\Init', false)) {
     return;
 }
 
+use FSFramework\Plugins\factura_pdf1\Services\GestorProgramaRoleDefinition;
+use FSFramework\Plugins\factura_pdf1\Services\GestorProgramaRoleService;
+use FSFramework\Plugins\factura_pdf1\Services\LegacyRolePermissionsGateway;
 use FSFramework\Plugins\factura_pdf1\Services\SettingsService;
 
 /**
@@ -34,10 +37,47 @@ class Init
 {
     private static ?SettingsService $settingsServiceForTests = null;
 
+    private static ?GestorProgramaRoleService $gestorRoleServiceForTests = null;
+
     public function init(): void
     {
         require_once __DIR__ . '/composer_autoload.php';
         $this->runSettingsUpgrade();
+        $this->ensureGestorRoleIfMissing();
+    }
+
+    /**
+     * Activation hook (PluginSchemaSynchronizer). Seeds the gestor role.
+     */
+    public static function upgrade(): void
+    {
+        self::runGestorRoleEnsure();
+    }
+
+    private function ensureGestorRoleIfMissing(): void
+    {
+        if (self::$gestorRoleServiceForTests !== null) {
+            return;
+        }
+
+        try {
+            $gateway = new LegacyRolePermissionsGateway();
+            if (!$gateway->roleExists(GestorProgramaRoleDefinition::CODROL)) {
+                self::runGestorRoleEnsure();
+            }
+        } catch (\Throwable $e) {
+            error_log('[factura_pdf1] GestorProgramaRoleService: ' . $e->getMessage());
+        }
+    }
+
+    private static function runGestorRoleEnsure(): void
+    {
+        try {
+            $service = self::$gestorRoleServiceForTests ?? new GestorProgramaRoleService(new LegacyRolePermissionsGateway());
+            $service->ensure();
+        } catch (\Throwable $e) {
+            error_log('[factura_pdf1] GestorProgramaRoleService: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -46,6 +86,15 @@ class Init
     public static function resetDependenciesForTests(): void
     {
         self::$settingsServiceForTests = null;
+        self::$gestorRoleServiceForTests = null;
+    }
+
+    /**
+     * @internal Test seam.
+     */
+    public static function setGestorRoleServiceForTests(?GestorProgramaRoleService $service): void
+    {
+        self::$gestorRoleServiceForTests = $service;
     }
 
     /**

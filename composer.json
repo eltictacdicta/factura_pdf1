@@ -3,7 +3,7 @@
     "description": "Multi-document customer PDF printing plugin for FSFramework (FacturaPDF1 port).",
     "type": "library",
     "license": "LGPL-3.0-or-later",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "require": {
         "php": ">=8.2",
         "rospdf/pdf-php": "^0.12"
