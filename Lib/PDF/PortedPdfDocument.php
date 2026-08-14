@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace FSFramework\Plugins\factura_pdf1\Lib\PDF;
 
 use FSFramework\Plugins\factura_pdf1\Model\PrintableDocumentInterface;
+use FSFramework\Plugins\factura_pdf1\Services\LineDiscountFormatter;
 
 /**
  * Standalone port of the upstream `FacturaPDF1\Lib\PDF\PDFDocument`
@@ -990,8 +991,13 @@ class PortedPdfDocument extends AbstractPdfDocument
         $tableData = [];
         foreach ($this->view->getLines() as $line) {
             $data = [];
+            $lineFields = $this->normalizeLineFields($line);
             foreach ($this->getLineHeaders() as $key => $value) {
-                $lineValue = is_array($line) ? ($line[$key] ?? null) : (property_exists($line, $key) ? $line->{$key} : null);
+                $lineValue = $lineFields[$key] ?? null;
+                if ($key === 'pvpunitario') {
+                    $data[$key] = $this->formatLineUnitPriceCell($lineFields);
+                    continue;
+                }
                 if ($value['type'] === 'percentage') {
                     $data[$key] = $this->formatNumber((float) $lineValue) . '%';
                 } elseif ($value['type'] === 'number') {
@@ -1006,6 +1012,62 @@ class PortedPdfDocument extends AbstractPdfDocument
         if ($tableData !== []) {
             $this->pdf->ezTable($tableData, $headers, '', $tableOptions);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function normalizeLineFields(mixed $line): array
+    {
+        if (is_array($line)) {
+            return $line;
+        }
+
+        $fields = [
+            'descripcion',
+            'cantidad',
+            'pvpunitario',
+            'pvptotal',
+            'pvpsindto',
+            'dtopor',
+            'dtopor2',
+            'dtopor3',
+            'dtopor4',
+            'iva',
+        ];
+        $normalized = [];
+        foreach ($fields as $field) {
+            if (is_object($line) && property_exists($line, $field)) {
+                $normalized[$field] = $line->{$field};
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    protected function formatLineUnitPriceCell(array $line): string
+    {
+        $pvpUnitario = (float) ($line['pvpunitario'] ?? 0);
+        $d1 = (float) ($line['dtopor'] ?? 0);
+        $d2 = (float) ($line['dtopor2'] ?? 0);
+        $d3 = (float) ($line['dtopor3'] ?? 0);
+        $d4 = (float) ($line['dtopor4'] ?? 0);
+        $printDto = !empty($this->settings['print_dto']);
+        $discounted = LineDiscountFormatter::discountedUnitPrice($pvpUnitario, $d1, $d2, $d3, $d4);
+
+        return LineDiscountFormatter::formatUnitPriceCell(
+            $printDto,
+            $pvpUnitario,
+            $d1,
+            $d2,
+            $d3,
+            $d4,
+            $this->formatNumber($pvpUnitario),
+            $this->formatNumber($discounted),
+        );
     }
 
     /**
@@ -1071,12 +1133,13 @@ class PortedPdfDocument extends AbstractPdfDocument
             'totalSupplied' => $this->translator->trans('supplied-amount'),
             'total' => $this->translator->trans('total'),
         ];
-        $neto = property_exists($model, 'neto') ? (float) $model->neto : 0.0;
-        $totaliva = property_exists($model, 'totaliva') ? (float) $model->totaliva : 0.0;
-        $totalrecargo = property_exists($model, 'totalrecargo') ? (float) $model->totalrecargo : 0.0;
-        $totalirpf = property_exists($model, 'totalirpf') ? (float) $model->totalirpf : 0.0;
-        $totalsuplidos = property_exists($model, 'totalsuplidos') ? (float) $model->totalsuplidos : 0.0;
-        $total = property_exists($model, 'total') ? (float) $model->total : 0.0;
+        $totales = $this->view->getTotales();
+        $neto = (float) ($totales['neto'] ?? 0.0);
+        $totaliva = (float) ($totales['totaliva'] ?? 0.0);
+        $totalrecargo = (float) ($totales['totalrecargo'] ?? 0.0);
+        $totalirpf = (float) ($totales['totalirpf'] ?? 0.0);
+        $totalsuplidos = (float) ($totales['totalsuplidos'] ?? 0.0);
+        $total = (float) ($totales['total'] ?? 0.0);
 
         // Resolve dominant tax percentage from line items
         $taxPct = '';

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace FSFramework\Plugins\factura_pdf1\Services;
 
+use FSFramework\Plugins\factura_pdf1\Lib\PDF\FacturaPdfCezpdf;
 use FSFramework\Plugins\factura_pdf1\Lib\PDF\PortedPdfDocument;
 use FSFramework\Plugins\factura_pdf1\Model\PrintableDocumentInterface;
 use FSFramework\Translation\FSTranslator;
@@ -152,9 +153,9 @@ class CezpdfRenderService
      * Marked `protected` (not `private`) so test doubles can
      * override it with a `SpyCezpdf` (see
      * `SettingsEffectCoverageTest`). The signature is
-     * stable; subclasses must return a `\Cezpdf` instance.
+     * stable; subclasses must return a {@see FacturaPdfCezpdf} instance.
      */
-    protected function createPdf(): \Cezpdf
+    protected function createPdf(): FacturaPdfCezpdf
     {
         $tmpName = defined('FS_TMP_NAME') ? FS_TMP_NAME : '';
         $tmpPath = 'tmp/' . $tmpName . 'pdf';
@@ -162,7 +163,7 @@ class CezpdfRenderService
             @mkdir($tmpPath, 0777, true);
         }
 
-        $pdf = new \Cezpdf('a4', 'portrait');
+        $pdf = new FacturaPdfCezpdf('a4', 'portrait');
         $pdf->tempPath = $tmpPath;
         $pdf->ezSetMargins(50, 50, 50, 50);
 

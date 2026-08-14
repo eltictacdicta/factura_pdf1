@@ -24,6 +24,7 @@ namespace FSFramework\Plugins\factura_pdf1\Model\Adapters;
 use FSFramework\Plugins\factura_pdf1\Model\HasPrintView;
 use FSFramework\Plugins\factura_pdf1\Model\PrintableDocumentInterface;
 use FSFramework\Plugins\factura_pdf1\Model\View\ClientDocumentPrintViewInterface;
+use FSFramework\Plugins\factura_pdf1\Services\LineDiscountFormatter;
 use FSFramework\Plugins\factura_pdf1\Services\RelatedModelsLoader;
 
 abstract class AbstractClienteDocumentAdapter implements PrintableDocumentInterface, HasPrintView
@@ -166,15 +167,52 @@ abstract class AbstractClienteDocumentAdapter implements PrintableDocumentInterf
     public function getLineas(): array
     {
         $result = [];
+        $cliente = $this->view->getCliente();
         foreach ($this->view->getLineas() as $linea) {
+            $discounts = LineDiscountFormatter::resolveLineDiscounts($linea, $cliente);
+            $cantidad = (float) ($linea->cantidad ?? 0);
+            $pvpUnitario = (float) ($linea->pvpunitario ?? 0);
+            $pvpsindto = (float) ($linea->pvpsindto ?? 0);
+            if ($pvpsindto <= 0 && $cantidad > 0 && $pvpUnitario > 0) {
+                $pvpsindto = $cantidad * $pvpUnitario;
+            }
+
+            $storedHadDiscounts = LineDiscountFormatter::lineHadStoredDiscounts($linea);
+            $pvptotal = (float) ($linea->pvptotal ?? 0);
+            if (
+                !$storedHadDiscounts
+                && LineDiscountFormatter::hasDiscount(
+                    $discounts['dtopor'],
+                    $discounts['dtopor2'],
+                    $discounts['dtopor3'],
+                    $discounts['dtopor4'],
+                )
+            ) {
+                $pvptotal = LineDiscountFormatter::calcPvptotal(
+                    $cantidad,
+                    $pvpUnitario,
+                    $discounts['dtopor'],
+                    $discounts['dtopor2'],
+                    $discounts['dtopor3'],
+                    $discounts['dtopor4'],
+                );
+            }
+
             $result[] = [
                 'codigo' => (string) ($linea->referencia ?? ''),
                 'descripcion' => (string) ($linea->descripcion ?? ''),
-                'cantidad' => (float) ($linea->cantidad ?? 0),
-                'pvpunitario' => (float) ($linea->pvpunitario ?? 0),
-                'pvptotal' => (float) ($linea->pvptotal ?? 0),
+                'cantidad' => $cantidad,
+                'pvpunitario' => $pvpUnitario,
+                'pvpsindto' => $pvpsindto,
+                'dtopor' => $discounts['dtopor'],
+                'dtopor2' => $discounts['dtopor2'],
+                'dtopor3' => $discounts['dtopor3'],
+                'dtopor4' => $discounts['dtopor4'],
+                'pvptotal' => $pvptotal,
                 'iva' => (float) ($linea->iva ?? 0),
-                'total' => (float) ($linea->pvptotal ?? 0),
+                'recargo' => (float) ($linea->recargo ?? 0),
+                'irpf' => (float) ($linea->irpf ?? 0),
+                'total' => $pvptotal,
             ];
         }
 
@@ -196,17 +234,52 @@ abstract class AbstractClienteDocumentAdapter implements PrintableDocumentInterf
     public function getTotales(): array
     {
         $doc = $this->view->getDocument();
+        $totalsuplidos = (float) ($doc->totalsuplidos ?? 0);
+
+        if ($this->shouldRecomputeDocumentTotals()) {
+            $computed = LineDiscountFormatter::computeDocumentTotalsFromLines(
+                $this->getLineas(),
+                $totalsuplidos,
+            );
+
+            return [
+                'neto' => $computed['neto'],
+                'total' => $computed['total'],
+                'totaliva' => $computed['totaliva'],
+                'totalirpf' => $computed['totalirpf'],
+                'totalrecargo' => $computed['totalrecargo'],
+                'netosindto' => (float) ($doc->netosindto ?? 0),
+                'dtopor1' => (float) ($doc->dtopor1 ?? 0),
+                'dtopor2' => (float) ($doc->dtopor2 ?? 0),
+                'totalsuplidos' => $totalsuplidos,
+                'totales' => $computed['total'],
+            ];
+        }
 
         return [
+            'neto' => (float) ($doc->neto ?? 0),
             'total' => (float) ($doc->total ?? 0),
             'totaliva' => (float) ($doc->totaliva ?? 0),
             'netosindto' => (float) ($doc->netosindto ?? 0),
             'dtopor1' => (float) ($doc->dtopor1 ?? 0),
             'dtopor2' => (float) ($doc->dtopor2 ?? 0),
             'totalirpf' => (float) ($doc->totalirpf ?? 0),
-            'totalsuplidos' => (float) ($doc->totalsuplidos ?? 0),
+            'totalrecargo' => (float) ($doc->totalrecargo ?? 0),
+            'totalsuplidos' => $totalsuplidos,
             'totales' => (float) ($doc->total ?? 0),
         ];
+    }
+
+    private function shouldRecomputeDocumentTotals(): bool
+    {
+        $cliente = $this->view->getCliente();
+        foreach ($this->view->getLineas() as $linea) {
+            if (LineDiscountFormatter::lineNeedsDiscountEnrichment($linea, $cliente)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getVencimiento(): ?string

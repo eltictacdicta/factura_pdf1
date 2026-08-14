@@ -133,7 +133,10 @@ final class SettingsService
             $this->persist($stored, self::IN_CODE_VERSION);
         }
 
-        return $this->mergeWithDefaults($stored);
+        $merged = $this->mergeWithDefaults($stored);
+        $merged['print_dto'] = ImpresionSettingsReader::isPrintDtoEnabled();
+
+        return $merged;
     }
 
     /**
