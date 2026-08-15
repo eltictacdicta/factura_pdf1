@@ -372,11 +372,23 @@ class PortedPdfDocument extends AbstractPdfDocument
             return '';
         }
 
-        // The currency symbol is read from the source view.
         $divisa = $this->view->getDivisa();
-        $symbol = property_exists($divisa, 'simbolo') ? (string) $divisa->simbolo : '';
+        if (property_exists($divisa, 'coddivisa') && (string) $divisa->coddivisa === $code) {
+            $symbol = property_exists($divisa, 'simbolo') ? (string) $divisa->simbolo : '';
+            $codiso = property_exists($divisa, 'codiso') ? (string) $divisa->codiso : '';
 
-        return $symbol;
+            return $this->formatPdfCurrencySymbol($symbol, $codiso);
+        }
+
+        $loaded = (new \divisa())->get($code);
+        if ($loaded instanceof \divisa) {
+            return $this->formatPdfCurrencySymbol(
+                (string) $loaded->simbolo,
+                (string) ($loaded->codiso ?? '')
+            );
+        }
+
+        return '';
     }
 
     /**
@@ -945,12 +957,51 @@ class PortedPdfDocument extends AbstractPdfDocument
      */
     protected function getLineHeaders(): array
     {
-        return [
-            'descripcion' => ['type' => 'text', 'title' => $this->translator->trans('description')],
-            'cantidad' => ['type' => 'number', 'title' => $this->translator->trans('quantity')],
-            'pvpunitario' => ['type' => 'number', 'title' => $this->translator->trans('price')],
-            'pvptotal' => ['type' => 'number', 'title' => $this->translator->trans('net')],
-        ];
+        $headers = [];
+
+        if ($this->shouldShowProductReference()) {
+            $headers['codigo'] = ['type' => 'text', 'title' => $this->translator->trans('reference')];
+        }
+
+        $headers['descripcion'] = ['type' => 'text', 'title' => $this->translator->trans('description')];
+        $headers['cantidad'] = ['type' => 'number', 'title' => $this->translator->trans('quantity')];
+        $headers['pvpunitario'] = ['type' => 'number', 'title' => $this->translator->trans('price')];
+        $headers['pvptotal'] = ['type' => 'number', 'title' => $this->translator->trans('net')];
+
+        return $headers;
+    }
+
+    protected function shouldShowProductReference(): bool
+    {
+        return empty($this->settings['ocultarreferenciaprod']);
+    }
+
+    /**
+     * Applies table heading background RGB from settings.
+     * Header labels render in white; light configured colours are darkened
+     * so they remain readable on screen and in print.
+     */
+    protected function applyTableHeadingColors(string $hexColor): void
+    {
+        $hex = ltrim($hexColor, '#');
+        if (strlen($hex) !== 6 || !ctype_xdigit($hex)) {
+            $hex = '555555';
+        }
+
+        $r = hexdec(substr($hex, 0, 2)) / 255;
+        $g = hexdec(substr($hex, 2, 2)) / 255;
+        $b = hexdec(substr($hex, 4, 2)) / 255;
+
+        $luminance = 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+        if ($luminance > 0.35) {
+            $r = 85 / 255;
+            $g = 85 / 255;
+            $b = 85 / 255;
+        }
+
+        $this->hr = $r;
+        $this->hg = $g;
+        $this->hb = $b;
     }
 
     /**
@@ -959,10 +1010,7 @@ class PortedPdfDocument extends AbstractPdfDocument
      */
     protected function insertBusinessDocBody(): void
     {
-        $colorcabecera = (string) ($this->settings['colorcabecera'] ?? '#ffffff');
-        $this->hr = hexdec(substr($colorcabecera, 1, 2)) / 255;
-        $this->hg = hexdec(substr($colorcabecera, 3, 2)) / 255;
-        $this->hb = hexdec(substr($colorcabecera, 5, 2)) / 255;
+        $this->applyTableHeadingColors((string) ($this->settings['colorcabecera'] ?? '#555555'));
         $colorfilas = (string) ($this->settings['colorfilas'] ?? '#ffffff');
         $this->lr = hexdec(substr($colorfilas, 1, 2)) / 255;
         $this->lg = hexdec(substr($colorfilas, 3, 2)) / 255;
@@ -981,8 +1029,10 @@ class PortedPdfDocument extends AbstractPdfDocument
 
         foreach ($this->getLineHeaders() as $key => $value) {
             $headers[$key] = '<c:color:1,1,1>' . $value['title'] . '</c:color>';
-            if ($key === 'descripcion') {
-                $tableOptions['cols'][$key] = ['width' => 240];
+            if ($key === 'codigo') {
+                $tableOptions['cols'][$key] = ['width' => 70];
+            } elseif ($key === 'descripcion') {
+                $tableOptions['cols'][$key] = ['width' => $this->shouldShowProductReference() ? 170 : 240];
             } elseif (in_array($value['type'], ['number', 'percentage'], true)) {
                 $tableOptions['cols'][$key] = ['justification' => 'right'];
             }
@@ -1024,6 +1074,7 @@ class PortedPdfDocument extends AbstractPdfDocument
         }
 
         $fields = [
+            'codigo',
             'descripcion',
             'cantidad',
             'pvpunitario',
@@ -1040,6 +1091,10 @@ class PortedPdfDocument extends AbstractPdfDocument
             if (is_object($line) && property_exists($line, $field)) {
                 $normalized[$field] = $line->{$field};
             }
+        }
+
+        if (is_object($line) && !isset($normalized['codigo']) && property_exists($line, 'referencia')) {
+            $normalized['codigo'] = (string) $line->referencia;
         }
 
         return $normalized;

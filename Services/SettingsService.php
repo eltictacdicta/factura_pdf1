@@ -95,7 +95,7 @@ final class SettingsService
             'ocultardireccionenvio' => false,
             'ref2' => 2,
             'documentosrelacionados' => 1,
-            'colorcabecera' => '#E9E9E9',
+            'colorcabecera' => '#555555',
             'colorfilas' => '#EDEDED',
             'espaciofilas' => 4,
             'ocultarreferenciaprod' => false,

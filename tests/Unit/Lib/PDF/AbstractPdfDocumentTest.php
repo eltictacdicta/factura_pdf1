@@ -147,6 +147,28 @@ final class AbstractPdfDocumentTest extends TestCase
         $this->assertSame('1.234,50', $doc->formatNumber(1234.5));
     }
 
+    public function testFormatPdfCurrencySymbolReturnsUtf8EuroForCezpdf(): void
+    {
+        $doc = $this->buildDocument();
+
+        $this->assertSame('€', $doc->formatPdfCurrencySymbol('€'));
+        $this->assertSame('€', $doc->formatPdfCurrencySymbol('', '978'));
+        $this->assertSame('€', $doc->formatPdfCurrencySymbol('', 'EUR'));
+        $this->assertSame('€', $doc->formatPdfCurrencySymbol('', 'eur'));
+
+        $suffix = '412,22 ' . $doc->formatPdfCurrencySymbol('€');
+        $win1252 = mb_convert_encoding($suffix, 'Windows-1252', 'UTF-8');
+        $this->assertSame("\x80", substr($win1252, -1));
+    }
+
+    public function testFormatPdfCurrencySymbolKeepsAsciiSymbols(): void
+    {
+        $doc = $this->buildDocument();
+
+        $this->assertSame('B', $doc->formatPdfCurrencySymbol('B'));
+        $this->assertSame('$', $doc->formatPdfCurrencySymbol('$'));
+    }
+
     public function testGetTaxesRowsReturnsEmptyArrayStub(): void
     {
         $doc = $this->buildDocument();

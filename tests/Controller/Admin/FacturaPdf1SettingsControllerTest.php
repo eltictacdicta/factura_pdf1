@@ -135,7 +135,7 @@ final class FacturaPdf1SettingsControllerTest extends TestCase
         ]));
 
         $loaded = (new SettingsService())->load();
-        $this->assertSame('#E9E9E9', $loaded['colorcabecera']);
+        $this->assertSame('#555555', $loaded['colorcabecera']);
         $this->assertSame('index.php?page=admin_factura_pdf1', $controller->last_redirect_url);
         $this->assertSame(Response::HTTP_FOUND, $controller->response_status_code);
     }

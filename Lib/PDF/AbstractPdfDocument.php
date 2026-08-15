@@ -173,6 +173,30 @@ abstract class AbstractPdfDocument
     }
 
     /**
+     * Normalize a currency symbol for Cezpdf output.
+     *
+     * Cezpdf {@see Cpdf::filterText()} expects UTF-8 and converts to
+     * Windows-1252 internally. Pre-converting to single-byte sequences
+     * (e.g. chr(128) for euro) produces invalid UTF-8 and the symbol is
+     * dropped or replaced in the PDF.
+     */
+    public function formatPdfCurrencySymbol(string $symbol, string $codiso = ''): string
+    {
+        $symbol = trim($symbol);
+        $codiso = strtoupper(trim($codiso));
+
+        if ($symbol === '€' || $codiso === '978' || $codiso === 'EUR') {
+            return '€';
+        }
+
+        if ($symbol === '') {
+            return '';
+        }
+
+        return $symbol;
+    }
+
+    /**
      * Translate a key via the injected FSTranslator, forwarding
      * the optional placeholders. Mirrors the upstream
      * `$this->i18n->trans()` call site. The translator is the

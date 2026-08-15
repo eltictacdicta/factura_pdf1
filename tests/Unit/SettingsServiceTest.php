@@ -49,7 +49,7 @@ final class SettingsServiceTest extends TestCase
         $defaults = $service->defaults();
 
         $this->assertSame(0, $defaults['posicionlogo']);
-        $this->assertSame('#E9E9E9', $defaults['colorcabecera']);
+        $this->assertSame('#555555', $defaults['colorcabecera']);
         $this->assertSame(3, $defaults['pagoyvencimiento']);
         $this->assertSame('left', $defaults['justiftexto1']);
         $this->assertArrayHasKey('documentosrelacionados', $defaults);
@@ -131,7 +131,7 @@ final class SettingsServiceTest extends TestCase
         $this->assertSame(SettingsService::IN_CODE_VERSION, $row['current_version']);
 
         $loaded = $service->load();
-        $this->assertSame('#E9E9E9', $loaded['colorcabecera']);
+        $this->assertSame('#555555', $loaded['colorcabecera']);
         $this->assertSame(0, $loaded['posicionlogo']);
     }
 
