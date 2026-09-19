@@ -29,7 +29,7 @@ final class GestorProgramaRoleServiceTest extends TestCase
 
     public function testCreatesRoleAndGrantsRegisteredManifestPages(): void
     {
-        foreach (['tpvmod', 'ventas_clientes', 'ventas_articulos', 'admin_factura_pdf1'] as $page) {
+        foreach (['tpvmod', 'ventas_clientes', 'ventas_articulos', 'admin_factura_pdf1', 'ventas_opcionales'] as $page) {
             $this->gateway->registeredPages[$page] = true;
         }
 
@@ -39,6 +39,7 @@ final class GestorProgramaRoleServiceTest extends TestCase
         $this->assertSame(GestorProgramaRoleDefinition::DESCRIPTION, $this->gateway->roles[GestorProgramaRoleDefinition::CODROL]);
         $this->assertTrue($this->gateway->roleHasPageAccess(GestorProgramaRoleDefinition::CODROL, 'tpvmod'));
         $this->assertTrue($this->gateway->accesses[GestorProgramaRoleDefinition::CODROL]['tpvmod']);
+        $this->assertTrue($this->gateway->roleHasPageAccess(GestorProgramaRoleDefinition::CODROL, 'ventas_opcionales'));
         $this->assertFalse($this->gateway->roleHasPageAccess(GestorProgramaRoleDefinition::CODROL, 'tpvmod_settings'));
     }
 
@@ -70,5 +71,27 @@ final class GestorProgramaRoleServiceTest extends TestCase
     public function testManifestDoesNotIncludeTpvmodSettings(): void
     {
         $this->assertNotContains('tpvmod_settings', GestorProgramaRoleDefinition::pages());
+    }
+
+    public function testManifestIncludesCatalogPagesAndExcludesRetiredFamiliasSlug(): void
+    {
+        $pages = GestorProgramaRoleDefinition::pages();
+
+        foreach (
+            [
+                'tarif_familias',
+                'ventas_opcionales',
+                'ventas_opcional',
+                'ventas_opcional_grupo',
+                'ventas_opcional_grupos',
+                'ventas_caracteristicas',
+                'ventas_familia',
+            ] as $page
+        ) {
+            $this->assertContains($page, $pages);
+        }
+
+        $this->assertNotContains('ventas_familias', $pages);
+        $this->assertNotContains('tpvmod_settings', $pages);
     }
 }

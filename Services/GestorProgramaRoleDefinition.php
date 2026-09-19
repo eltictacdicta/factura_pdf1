@@ -37,8 +37,15 @@ final class GestorProgramaRoleDefinition
         // catalogo_core
         'ventas_articulos',
         'ventas_articulo',
-        'ventas_familias',
+        // "Familias" menu page: replaces the retired ventas_familias slug
+        // (removed by catalogo_core Init::retireVentasFamiliasPage()).
+        'tarif_familias',
         'ventas_familia',
+        'ventas_opcionales',
+        'ventas_opcional',
+        'ventas_opcional_grupo',
+        'ventas_opcional_grupos',
+        'ventas_caracteristicas',
         'ventas_fabricantes',
         'ventas_fabricante',
         'admin_almacenes',
