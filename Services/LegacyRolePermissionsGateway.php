@@ -48,6 +48,7 @@ final class LegacyRolePermissionsGateway implements RolePermissionsGateway
         $access = new \fs_rol_access([
             'codrol' => $codrol,
             'fs_page' => $pageName,
+            'allow_delete' => false,
         ]);
 
         return $this->legacySelectHasRows($access->exists());
