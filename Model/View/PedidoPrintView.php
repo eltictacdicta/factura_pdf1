@@ -178,7 +178,7 @@ final class PedidoPrintView implements ClientDocumentPrintViewInterface
             );
         }
 
-        $related = RelatedModelsLoader::load($pedido);
+        $related = RelatedModelsLoader::load($pedido, 'pedido');
         $lineasRaw = $pedido->get_lineas();
         $lineas = is_array($lineasRaw) ? array_values($lineasRaw) : [];
         $lineasIva = self::aggregateLineasIvaFromLineas($lineas);

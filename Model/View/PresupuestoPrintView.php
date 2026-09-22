@@ -178,7 +178,7 @@ final class PresupuestoPrintView implements ClientDocumentPrintViewInterface
             );
         }
 
-        $related = RelatedModelsLoader::load($presupuesto);
+        $related = RelatedModelsLoader::load($presupuesto, 'presupuesto');
         $lineasRaw = $presupuesto->get_lineas();
         $lineas = is_array($lineasRaw) ? array_values($lineasRaw) : [];
         $lineasIva = self::aggregateLineasIvaFromLineas($lineas);

@@ -216,7 +216,7 @@ final class FacturaPrintView implements ClientDocumentPrintViewInterface
             );
         }
 
-        $related = RelatedModelsLoader::load($factura);
+        $related = RelatedModelsLoader::load($factura, 'factura');
 
         /** @var mixed $lineasRaw */
         $lineasRaw = $factura->get_lineas();

@@ -178,7 +178,7 @@ final class AlbaranPrintView implements ClientDocumentPrintViewInterface
             );
         }
 
-        $related = RelatedModelsLoader::load($albaran);
+        $related = RelatedModelsLoader::load($albaran, 'albaran');
         $lineasRaw = $albaran->get_lineas();
         $lineas = is_array($lineasRaw) ? array_values($lineasRaw) : [];
         $lineasIva = self::aggregateLineasIvaFromLineas($lineas);
