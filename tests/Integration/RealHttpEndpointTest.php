@@ -57,6 +57,14 @@ use PHPUnit\Framework\TestCase;
  *    body (no auth required, or auth-bypass active),
  *    the test asserts the PDF content.
  *
+ * `testLiveEndpointDdevReachable` follows the same
+ * semantics: HTTP 200 asserts the router answered with
+ * a non-empty body, an auth redirect (HTTP 302) is
+ * environmental and skipped, and any other status
+ * (5xx, 4xx, ...) is a genuine failure. This keeps the
+ * smoke test able to tell "ddev is up" apart from
+ * "ddev is down or broken".
+ *
  * The PR-3 deliverable is the test seam itself, not a
  * logged-in user fixture. The task brief explicitly
  * scopes the test to "real HTTP" — the auth gap is
@@ -182,6 +190,24 @@ final class RealHttpEndpointTest extends TestCase
         return $this->lastStatus;
     }
 
+    /**
+     * Return the `Location` header of the last response,
+     * or an empty string when the response has none.
+     * Used only to make the auth-redirect skip message
+     * name the redirect target; the test never asserts
+     * on it, because the auth provider owns that value.
+     */
+    private function lastLocationHeader(): string
+    {
+        foreach ($this->lastHeaders as $header) {
+            if (preg_match('~^location:\s*(.+)$~i', trim($header), $m)) {
+                return trim($m[1]);
+            }
+        }
+
+        return '';
+    }
+
     private function skipIfDdevUnavailable(): bool
     {
         $ping = $this->fetch('/index.php?page=login');
@@ -297,21 +323,47 @@ final class RealHttpEndpointTest extends TestCase
 
     public function testLiveEndpointDdevReachable(): void
     {
-        // Lightweight smoke test: the ddev router
-        // responds to the login page (HTTP 200). This
-        // is the pre-condition for the other four
-        // integration tests; running it in isolation
-        // lets the test report show "ddev is up" vs
-        // "ddev is down" without invoking the full
-        // PDF pipeline.
+        // Lightweight smoke test: the ddev router is up
+        // and answering the login page. Its purpose is
+        // to tell "ddev is up" apart from "ddev is down
+        // or broken", so it must keep failing on a real
+        // error — it is not a test that always skips.
+        //
+        // OidcProvider intercepts authentication and sends
+        // every unauthenticated request to /oauth/login, so
+        // a *healthy* router answers this probe with HTTP
+        // 302. That redirect is environmental (the test
+        // runner has no admin session) and is skipped,
+        // exactly like the four PDF endpoint tests above.
+        // Any other unexpected status (5xx, 4xx, ...) is a
+        // genuine failure.
         $body = $this->fetch('/index.php?page=login');
-        if ($body === null) {
+        $status = $this->lastHttpStatus();
+
+        if ($body === null && $status === 0) {
             $this->markTestSkipped('ddev not reachable at ' . $this->baseUrl());
 
             return;
         }
 
-        $this->assertSame(200, $this->lastHttpStatus(), 'ddev router should respond 200 to the login page.');
+        if ($status === 302 || $status === 0) {
+            $location = $this->lastLocationHeader();
+            $this->markTestSkipped(sprintf(
+                'ddev router is up but redirects to authentication (HTTP %d%s). ' .
+                'OidcProvider intercepts the login page for unauthenticated callers; ' .
+                'this is environmental, not a broken endpoint.',
+                $status,
+                $location === '' ? '' : ' -> ' . $location,
+            ));
+
+            return;
+        }
+
+        $this->assertSame(
+            200,
+            $status,
+            'ddev router should respond 200 (or redirect to auth); an unexpected status means the site is broken.',
+        );
         $this->assertNotEmpty($body, 'ddev router should return a non-empty body for the login page.');
     }
 }
