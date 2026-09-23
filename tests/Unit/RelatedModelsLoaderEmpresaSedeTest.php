@@ -103,11 +103,11 @@ final class RelatedModelsLoaderEmpresaSedeTest extends TestCase
         $GLOBALS['config2'] = [];
         $GLOBALS['plugins'] = [];
 
-        require_once FS_FOLDER . '/base/fs_settings.php';
-
-        // The production loader requires the related models itself; requiring
-        // them here keeps the RED failure about the missing seam, not about an
-        // unloaded legacy class.
+        // `fs_settings` is deliberately NOT preloaded: the production loader
+        // reaches `empresa_sede::mapping()`, which must resolve its own
+        // dependency from any entry point. Preloading it here masked the
+        // production `Class "fs_settings" not found` fatal; see
+        // plugins/business_data/tests/EmpresaSedeEntryPointLoadingTest.php.
         RelatedModelsLoader::requireRelatedModels();
         if (!class_exists('empresa_sede', false)) {
             require_once FS_FOLDER . '/plugins/business_data/model/empresa_sede.php';
